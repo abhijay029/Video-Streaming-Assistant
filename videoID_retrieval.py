@@ -36,7 +36,7 @@ class VideoIDRetriever:
 
         distances, indices = self.index.search(prompt_vec, min(k, self.index.ntotal))
 
-        return [self.videoIDs[i] for i in indices[0]]
+        return ([self.videoIDs[i] for i in indices[0]], distances)
 
 
 if __name__ == "__main__":
@@ -54,6 +54,7 @@ if __name__ == "__main__":
 
     ret = VideoIDRetriever(vecDB_path = VEC_DATABASE_PATH, dataset_path = DATABASE_PATH)
     
-    videoIDs = ret.get_videoIDs(prompt_vec = prompt_vec, k = 3)
+    videoIDs, distances = ret.get_videoIDs(prompt_vec = prompt_vec, k = 3)
 
     print(videoIDs)
+    print(distances)
