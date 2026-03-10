@@ -1,5 +1,5 @@
 .nlp_proj_env/
 .vscode/
-# Dataset/
+Dataset/
 test.py
 video_index.faiss
