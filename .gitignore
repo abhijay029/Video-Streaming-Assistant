@@ -1,4 +1,4 @@
-.nlp_proj_env
-.vscode
-Dataset
+.nlp_proj_env/
+.vscode/
+Dataset/
 test.py
