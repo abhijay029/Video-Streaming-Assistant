@@ -158,7 +158,7 @@ class PromptPreprocessor:
         intent, intent_scores = self.detect_intent(prompt_vec)
         extracted, valid, best = self.extract_filters(prompt_vec)
 
-        return {
+        return ({
             "raw_prompt": user_prompt,
             "cleaned_prompt": cleaned,
             "intent": intent,
@@ -167,7 +167,7 @@ class PromptPreprocessor:
             "valid_filters":valid,
             "best_filters": best
             # "embedding": prompt_vec.tolist()
-        }
+        }, prompt_vec)
 
 if __name__ == "__main__":
     pp = PromptPreprocessor()
