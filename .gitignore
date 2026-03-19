@@ -5,3 +5,5 @@ test.py
 test.ipynb
 video_index.faiss
 .env
+__pycache__/
+*.pyc
