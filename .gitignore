@@ -2,4 +2,6 @@
 .vscode/
 Dataset/
 test.py
+test.ipynb
 video_index.faiss
+.env
