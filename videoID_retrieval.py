@@ -36,7 +36,7 @@ class VideoIDRetriever:
 
         distances, indices = self.index.search(prompt_vec, min(k, self.index.ntotal))
 
-        return ([self.videoIDs[i] for i in indices[0]], distances)
+        return ([self.videoIDs[i] for i in indices[0]], distances.reshape(-1,))
 
 
 if __name__ == "__main__":
