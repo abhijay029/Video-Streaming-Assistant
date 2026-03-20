@@ -7,3 +7,4 @@ video_index.faiss
 .env
 __pycache__/
 *.pyc
+test/

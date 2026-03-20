@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
-    VEC_DATABASE_PATH = "video_index.faiss"
+    VEC_DATABASE_PATH = "Dataset\\video_index.faiss"
     DATABASE_PATH = "Dataset\\youtube_videos_dataset.csv"
 
     model = SentenceTransformer("all-MiniLM-L6-v2")
