@@ -46,7 +46,7 @@ The previous code failed because the 'faker' library was not found. I need to in
 
 """
 
-!pip install faker
+# !pip install faker
 print("Faker library installed.")
 
 """**Reasoning**:
