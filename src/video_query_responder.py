@@ -1,12 +1,12 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
-
+from dotenv import load_dotenv
 class VideoAssistant:
     def __init__(self):
+        load_dotenv(".env")
         self.llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.3,
-        google_api_key="AIzaSyD_djBtv_Bj9z869t-n_fA9H7dboN99Zvw"
         )
 
     def answer_question(self, context, question):
