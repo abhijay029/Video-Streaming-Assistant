@@ -1,6 +1,9 @@
 from prompt_preprocessor import PromptPreprocessor
 from videoID_retrieval import VideoIDRetriever
 from pprint import pprint
+from frame_extractor import FrameExtractor
+from video_frame_intrpreter import FrameInterpreter
+from video_query_responder import VideoAssistant
 
 class RankedVideos:
     
@@ -28,6 +31,35 @@ class RankedVideos:
         #get the url
 
         #rank the videos and return the ranked videos.
+
+class VideoQuery:
+    
+    def __init__(self):
+        
+        self.extractor = FrameExtractor()
+
+        self.interpretor = FrameInterpreter()
+
+        self.responder = VideoAssistant()
+    
+    def get_response(self, userquery, youtube_url, timestamp, context_seconds = 3, fps_sample = 2):
+
+        context = self.extractor.build_video_context(
+            youtube_url = youtube_url, 
+            timestamp = timestamp, 
+            context_seconds = context_seconds,
+            fps_sample = fps_sample
+            )
+        
+        frames = context['frames']
+
+        question = self.interpretor.get_question(frames)
+
+        interpretaion = self.interpretor.interpret_frames(question = question)
+
+        answer = self.responder.answer_question(question = userquery, context = interpretaion)
+
+        return answer
 
 
 

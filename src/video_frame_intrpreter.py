@@ -125,4 +125,6 @@ class FrameInterpreter:
             config = self.config
         )
 
-        return response
+        interpretation = response["messages"][-1].content
+
+        return interpretation
