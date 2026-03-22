@@ -141,12 +141,12 @@ class PromptPreprocessor:
                     best_score = sim
                     best_label = label
                 
-                extracted[category] = {label : sim}
+                extracted[category] = {label : sim} #{Each Category: {each label: score}}
                 
                 if sim > threshold:
-                    valid_filter[category] = {label : sim}
+                    valid_filter[category] = {label : sim} #{Each category: {valid label: score}}
             
-            best_filter[category] = {best_label : best_score} 
+            best_filter[category] = {best_label : best_score} #{Each category : {best label: best score}}
 
         return (extracted, valid_filter, best_filter)
 
@@ -171,5 +171,5 @@ class PromptPreprocessor:
 
 if __name__ == "__main__":
     pp = PromptPreprocessor()
-    obj = pp.preprocess("Suggest me some CNN tutorials that are long form and rank them according to popularity")
-    print(obj)
+    meta, vec = pp.preprocess("Suggest me some CNN tutorials that are long form and rank them according to popularity")
+    print(meta)

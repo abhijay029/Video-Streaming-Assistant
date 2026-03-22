@@ -26,7 +26,7 @@ class VideoIDRetriever:
                              \nvideo IDs: {len(self.videoIDs)}
                              \nindex: {self.index.ntotal}""")
     
-    def get_videoIDs(self, prompt_vec: np.ndarray , k: int):
+    def get_videoIDs(self, prompt_vec: np.ndarray , k: int = 10):
         
         prompt_vec = prompt_vec.astype("float32")
 
