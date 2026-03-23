@@ -22,18 +22,19 @@ class VideoAssistant:
 
         return response.content
 
-# Test context
-test_context = """
-- Visual: Gameplay showing character selection screen with multiple avatars
-- Text on screen: Level 1: Training Grounds | Choose Your Character
-- Instructor just said: "Now we need to choose our starting character. Each has different abilities."
-- Topic: Gaming
-- Difficulty: Intermediate
-"""
+if __name__ == "__main__":
+    # Test context
+    test_context = """
+    - Visual: Gameplay showing character selection screen with multiple avatars
+    - Text on screen: Level 1: Training Grounds | Choose Your Character
+    - Instructor just said: "Now we need to choose our starting character. Each has different abilities."
+    - Topic: Gaming
+    - Difficulty: Intermediate
+    """
 
-test_question = "What character should I choose?"
-assistant = VideoAssistant()
+    test_question = "What character should I choose?"
+    assistant = VideoAssistant()
 
-# Run it
-response = assistant.answer_question(test_context, test_question)
-print(response)
+    # Run it
+    response = assistant.answer_question(test_context, test_question)
+    print(response)

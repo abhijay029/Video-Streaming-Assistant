@@ -22,7 +22,6 @@ class VideoRanker:
     def rank(self,
              rag_results: Dict[str, Any],
              filter_type: str = 'engagement',
-             n_results: int = 5,
              min_views: Optional[int] = None,
              min_likes: Optional[int] = None,
              min_engagement: Optional[float] = None,
@@ -106,12 +105,11 @@ class VideoRanker:
             })
 
         scored_videos.sort(key=lambda x: x['score'], reverse=True)
-        top_results = scored_videos[:n_results]
+        
 
         print(f"🎯 After filters: {len(scored_videos)} videos")
-        print(f"✅ Returning top {len(top_results)} results")
 
-        return top_results
+        return scored_videos
 
     def display_results(self, videos: List[Dict]):
         """Pretty print ranked results"""
@@ -166,7 +164,6 @@ if __name__ == "__main__":
     top_5 = ranker.rank(
         rag_results,
         filter_type='popularity',
-        n_results=5
     )
 
     # Display results

@@ -15,8 +15,10 @@ Independent file - Converts CSV dataset to RAG format with video URLs
 import pandas as pd
 
 class RAGFetcher:
-    def __init__(self, csv_path: str):
+    def __init__(self, csv_path: str, distances: list,videoIDs: list = ["tkQwDzaarlM", "m-xcxqjjOwB", "mgKTtF-GswP", "G25yIun-Isc", "7LB6MSxROy8"]):
         self.df = pd.read_csv(csv_path)
+        self.df = self.df[self.df["video_id"].isin(videoIDs)]
+        self.distances =distances
         print(f"✅ Loaded {len(self.df)} videos from CSV")
 
     def _format_duration(self, seconds):
@@ -40,11 +42,11 @@ class RAGFetcher:
                 'video_id': row['video_id'],
                 'title': row['title'],
                 'description': row['description'],
-                'channel': row['channel_name'],
-                'views': row['views'],
-                'likes': row['likes'],
+                'channel': row['channel_title'],
+                'views': row['view_count'],
+                'likes': row['like_count'],
                 'duration': self._format_duration(row['duration_seconds']),
-                'upload_date': row['upload_date'],
+                'upload_date': row['published_at'],
                 'url': f"https://www.youtube.com/watch?v={row['video_id']}",
                 'embed_url': f"https://www.youtube.com/embed/{row['video_id']}"
             }
@@ -52,7 +54,7 @@ class RAGFetcher:
 
         return {
             'ids': [video_ids],
-            'distances': [[0.0] * len(video_ids)],
+            'distances': [self.distances],
             'metadatas': [metadatas]
         }
 
@@ -64,10 +66,10 @@ class RAGFetcher:
             json.dump(results, f, indent=2)
         print(f"✅ Saved to {output_path}")
 
-# ========== STANDALONE USAGE ==========
+
 if __name__ == "__main__":
     # Edit this path to your CSV file
-    CSV_PATH = '/content/youtube_videos_dataset.csv'
+    CSV_PATH = 'Dataset\\youtube_videos_dataset.csv'
 
     fetcher = RAGFetcher(CSV_PATH)
     results = fetcher.get_rag_results()

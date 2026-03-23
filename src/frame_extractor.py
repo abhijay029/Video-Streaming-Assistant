@@ -264,4 +264,4 @@ if __name__ == '__main__':
     else:
         print("Failed to build video context.")
 
-print(type(context['frames']))
+    print(type(context['frames']))
