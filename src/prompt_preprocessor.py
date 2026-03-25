@@ -1,5 +1,5 @@
-from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from helper.models import Models
 import numpy as np
 import re
 import os
@@ -11,7 +11,7 @@ class PromptPreprocessor:
         
         os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
         
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+        self.model = Models.get_encoder()
 
         self.intent_phrases = {
             "summary": [

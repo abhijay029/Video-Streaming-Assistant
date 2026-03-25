@@ -1,21 +1,24 @@
 import faiss
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
 import os
+from models import Models
 
-
-def get_title_desc_embeddings(dataset_path: str):
+def get_text_embeddings(dataset_path: str):
 
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = Models.get_encoder()
 
     df = pd.read_csv(dataset_path)
 
     videoIDs = df["video_id"].tolist()
 
-    texts = (df["title"] + " " + df["description"]).tolist()
+    texts = (
+            "Title: " + df["title"].fillna("") + "\n" +
+            "Description: " + df["description"].fillna("") + "\n" +
+            "Tags: " + df["tags"].fillna("")
+            ).tolist()
 
     embeddings = model.encode(texts).astype("float32")
 
@@ -26,7 +29,7 @@ def get_title_desc_embeddings(dataset_path: str):
 
 def create_save_index(name: str, dataset_path: str):
 
-    embeddings, videoIDs = get_title_desc_embeddings(dataset_path)
+    embeddings, videoIDs = get_text_embeddings(dataset_path)
 
     dimension = embeddings.shape[1]
 

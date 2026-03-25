@@ -30,7 +30,7 @@ class RankedVideos:
         
         print("Prompt vector: ", vec.shape)
 
-        videoIDs, distances = self.retriever.get_videoIDs(vec, k = 5)
+        videoIDs, distances = self.retriever.get_videoIDs(meta["raw_prompt"], vec, k = 5)
 
         print("")
 
@@ -52,7 +52,7 @@ class RankedVideos:
         #rank the videos and return the ranked videos.
         ranked_videos = self.ranker.rank(rag_results = result)
 
-        print("Ranked videos: ", len(ranked_videos))
+        print("Ranked videos: ", ranked_videos)
 
         return ranked_videos
 
@@ -88,12 +88,13 @@ class VideoQuery:
 
 
 def test_feature_1():
-    prompt = "Suggest me some CNN tutorials that are long form and rank them according to popularity"
+    prompt = "Give me a video about Pets & Animals and Pet Care"
     
     video_fetcher = RankedVideos()
 
-    video_fetcher.get_ranked_videos(prompt = prompt)
+    ranked = video_fetcher.get_ranked_videos(prompt = prompt)
 
+    print(ranked)
 
 def test_feature_2():
 
@@ -104,9 +105,9 @@ def test_feature_2():
     vq = VideoQuery()
     answer = vq.get_response(userquery = user_Query, youtube_url = youtube_url, timestamp = timestamp)
 
-    print(answer)
+    pprint(answer)
 
 if __name__ == "__main__":
 
-    # test_feature_1()
-    test_feature_2()
+    test_feature_1()
+    # test_feature_2()
