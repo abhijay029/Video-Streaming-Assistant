@@ -4,10 +4,11 @@ import os
 import pandas as pd
 from helper.models import Models
 from pprint import pprint
+from helper.dataset import Dataset
 
 class VideoIDRetriever:
     
-    def __init__(self, vecDB_path: str, dataset_path: str):
+    def __init__(self, vecDB_path: str, dataframe: pd.DataFrame):
 
         if not os.path.exists(vecDB_path):
             raise FileNotFoundError(f"The following index path does not exist: \n{vecDB_path}")
@@ -16,11 +17,8 @@ class VideoIDRetriever:
 
         if self.index.ntotal == 0:
             raise ValueError(f"The following index does not contain any vectors: \n{vecDB_path}")
-
-        if not os.path.exists(dataset_path):
-            raise FileNotFoundError(f"The following dataset path does not exist: \n{dataset_path}")
         
-        self.df = pd.read_csv(dataset_path)
+        self.df = dataframe
         
         self.videoIDs = self.df['video_id'].to_list()
 
@@ -56,14 +54,16 @@ class VideoIDRetriever:
 
         pairs = [(prompt, doc) for doc in selected_text]
 
-        scores = self.reranker.predict(pairs)
+        cross_scores = self.reranker.predict(pairs)
 
         faiss_scores = distances.reshape(-1)
 
-        results = sorted(zip(selected_ids, scores, faiss_scores), key = lambda x: x[1], reverse = True)
+        scores = [{"cross": cross_scores[i], "faiss": faiss_scores[i]} for i in range(len(selected_ids))]
 
-        results = [result for result in results if result[2] > 0.40]
+        results = dict(zip(selected_ids, scores))
 
+        results = dict(sorted(results.items(), key = lambda item: item[1]["cross"], reverse = True))
+        
         return results
 
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
     VEC_DATABASE_PATH = "Dataset\\video_index.faiss"
-    DATABASE_PATH = "Dataset\\youtube_videos_dataset.csv"
+    df = Dataset.get_dataframe()
 
     model = Models.get_encoder()
     
@@ -80,10 +80,8 @@ if __name__ == "__main__":
     
     prompt_vec = model.encode(prompt)
 
-    ret = VideoIDRetriever(vecDB_path = VEC_DATABASE_PATH, dataset_path = DATABASE_PATH)
+    ret = VideoIDRetriever(vecDB_path = VEC_DATABASE_PATH, dataframe = df)
     
-    videoIDs, cross_scores, faiss_scores = ret.get_videoIDs(prompt, prompt_vec = prompt_vec, k = 3)
+    results = ret.get_videoIDs(prompt, prompt_vec = prompt_vec, k = 3)
 
-    print(videoIDs)
-    print(cross_scores)
-    print(faiss_scores)
+    print(results)

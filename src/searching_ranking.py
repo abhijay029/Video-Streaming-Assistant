@@ -120,10 +120,11 @@ class VideoRanker:
         for i, v in enumerate(videos, 1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
             print(f"\n{medal} {v['title']}")
+            
             print(f"   🔗 {v['url']}")
             print(f"   👤 {v['channel']} | 📚 {v['topic']} | 📊 {v['difficulty']}")
             print(f"   📈 Views: {self._format_num(v['views'])} | 👍 Likes: {self._format_num(v['likes'])}")
-            print(f"   ⭐ Score: {v['score']:.3f}")
+            
 
     def _format_num(self, num):
         if num >= 1_000_000:

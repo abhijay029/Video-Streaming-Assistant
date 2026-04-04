@@ -3,14 +3,15 @@ import numpy as np
 import pandas as pd
 import os
 from models import Models
+from dataset import Dataset
 
-def get_text_embeddings(dataset_path: str):
+def get_text_embeddings(dataframe: pd.DataFrame):
 
     os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
     model = Models.get_encoder()
 
-    df = pd.read_csv(dataset_path)
+    df = dataframe
 
     videoIDs = df["video_id"].tolist()
 
@@ -27,9 +28,9 @@ def get_text_embeddings(dataset_path: str):
     return embeddings, videoIDs
 
 
-def create_save_index(name: str, dataset_path: str):
+def create_save_index(name: str, dataframe: pd.DataFrame):
 
-    embeddings, videoIDs = get_text_embeddings(dataset_path)
+    embeddings, videoIDs = get_text_embeddings(dataframe = dataframe)
 
     dimension = embeddings.shape[1]
 
@@ -53,6 +54,7 @@ def create_save_index(name: str, dataset_path: str):
     return index, videoIDs
 
 if __name__ == '__main__':
-    DATASET_PATH = "Dataset/youtube_videos_dataset.csv"
 
-    create_save_index(name = "video_index", dataset_path = DATASET_PATH)
+    df = Dataset.get_dataframe()
+    
+    create_save_index(name = "video_index", dataframe = df)

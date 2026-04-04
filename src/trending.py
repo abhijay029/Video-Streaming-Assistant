@@ -1,12 +1,12 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-
+from helper.dataset import Dataset
 
 class Trending:
 
-    def __init__(self, DATASET_PATH = "Dataset\\youtube_videos_dataset.csv"):
-        self.df = pd.read_csv(DATASET_PATH, parse_dates=['published_at'])
+    def __init__(self, dataframe: pd.DataFrame):
+        self.df = dataframe
 
     """## Prepare Data for Scoring
 
@@ -96,9 +96,13 @@ class Trending:
 
 
 if __name__ == "__main__":
-    trend = Trending()
+
+    df =Dataset.get_dataframe()
+
+    trend = Trending(dataframe = df)
+    
     videos = trend.get_trending_videos()
 
     print(type(videos))
 
-    print(videos.head(20))
+    print(videos[["video_id", "title", "Description"]].head(20))

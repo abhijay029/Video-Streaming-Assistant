@@ -1,11 +1,11 @@
 import pandas as pd
+from helper.dataset import Dataset
 
 class RAGFetcher:
-    def __init__(self, csv_path: str, distances: list,videoIDs: list = ["tkQwDzaarlM", "m-xcxqjjOwB", "mgKTtF-GswP", "G25yIun-Isc", "7LB6MSxROy8"]):
-        self.df = pd.read_csv(csv_path)
+    def __init__(self, dataframe: pd.DataFrame, faiss_scores: list = None, videoIDs: list = ["tkQwDzaarlM", "m-xcxqjjOwB", "mgKTtF-GswP", "G25yIun-Isc", "7LB6MSxROy8"]):
+        self.df = dataframe
         self.df = self.df[self.df["video_id"].isin(videoIDs)]
-        self.distances =distances
-        print(f"✅ Loaded {len(self.df)} videos from CSV")
+        self.faiss_scores = faiss_scores
 
     def _format_duration(self, seconds):
         if pd.isna(seconds):
@@ -40,27 +40,32 @@ class RAGFetcher:
 
         return {
             'ids': [video_ids],
-            'distances': [self.distances],
+            'distances': [self.faiss_scores],
             'metadatas': [metadatas]
         }
 
     def save_to_json(self, output_path: str):
+        
         """Save RAG results to JSON file"""
+        
         import json
+
         results = self.get_rag_results()
+        
         with open(output_path, 'w') as f:
             json.dump(results, f, indent=2)
-        print(f"✅ Saved to {output_path}")
+        
+        print(f"Saved to {output_path}")
 
 
 if __name__ == "__main__":
 
-    CSV_PATH = 'Dataset\\youtube_videos_dataset.csv'
+    df = Dataset.get_dataframe()
 
-    fetcher = RAGFetcher(CSV_PATH)
+    fetcher = RAGFetcher(dataframe = df)
     results = fetcher.get_rag_results()
 
-    print("\n📹 First 3 videos with URLs:")
+    print("\nFirst 3 videos with URLs:")
     for i, video in enumerate(results['metadatas'][0][:3]):
         print(f"{i+1}. {video['title']}")
         print(f"   URL: {video['url']}\n")

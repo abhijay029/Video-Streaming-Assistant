@@ -6,53 +6,63 @@ from video_frame_intrpreter import FrameInterpreter
 from video_query_responder import VideoAssistant
 from rag_to_url import RAGFetcher
 from searching_ranking import VideoRanker
+from helper.dataset import Dataset
+import sys
 
 class RankedVideos:
     
     def __init__(self):
         
         self.VEC_DB_PATH = "Dataset\\video_index.faiss"
-        self.DATASET_PATH = "Dataset\\youtube_videos_dataset.csv"
-    
-        self.preprocessor = PromptPreprocessor()
-        self.retriever = VideoIDRetriever(vecDB_path = self.VEC_DB_PATH, dataset_path = self.DATASET_PATH)
+        self.df = Dataset.get_dataframe()
+
+        print("DEBUG: LINE 18, DATAFRAME LOADED. \n")
         
+        self.preprocessor = PromptPreprocessor()
+        self.retriever = VideoIDRetriever(vecDB_path = self.VEC_DB_PATH, dataframe = self.df)
         self.ranker = VideoRanker()
+
+        print("DEBUG: LINE 25, RankedVideos CONSTRUCTOR EXECUTED. \n")
 
     def get_ranked_videos(self, prompt: str):
 
         meta, vec = self.preprocessor.preprocess(prompt)
 
-        print("meta information of the prompt:")
-        pprint(meta)
-
         print("")
         
         print("Prompt vector: ", vec.shape)
 
-        videoIDs, distances = self.retriever.get_videoIDs(meta["raw_prompt"], vec, k = 5)
+        results = self.retriever.get_videoIDs(meta["raw_prompt"], vec, k = 5)
 
         print("")
 
-        print("Video IDs Retrieved: ", len(videoIDs))
-        print("Distances of title and description of videos from the user prompt: ", len(distances))
+        print("Video IDs Retrieved: ", len(results.keys()))
+        
+        faiss_scores = [item[1]["faiss"] for item in results.items()]
+        
+        videoIDs = list(results.keys())
         
         #get the url
-        self.url_fetcher = RAGFetcher(csv_path = self.DATASET_PATH, distances = distances, videoIDs = videoIDs)
+        self.url_fetcher = RAGFetcher(dataframe = self.df, faiss_scores = faiss_scores, videoIDs = videoIDs)
         result = self.url_fetcher.get_rag_results()
         
         print("")
 
         print("Video IDs:", len(result["ids"][0]))
         print("Distances: ", len(result["distances"][0]))
-        print("Metadata: ", len(result["metadatas"][0]))
+        
+        print("Video ID                   Title")
+        
+        for metadata in result["metadatas"][0]:
+
+            print(f"{metadata["video_id"]} {metadata["title"]}")
 
         print("")
 
         #rank the videos and return the ranked videos.
         ranked_videos = self.ranker.rank(rag_results = result)
 
-        print("Ranked videos: ", ranked_videos)
+        self.ranker.display_results(ranked_videos)
 
         return ranked_videos
 
@@ -87,18 +97,29 @@ class VideoQuery:
 
 
 
+
 def test_feature_1():
-    prompt = "Give me a video about Pets & Animals and Pet Care"
+    
+    print("Enter Prompt: " )
+    prompt = sys.stdin.read()
+
+    # prompt = "Give me a video about Pets & Animals and Pet Care"
     
     video_fetcher = RankedVideos()
 
     ranked = video_fetcher.get_ranked_videos(prompt = prompt)
 
-    print(ranked)
+
+
 
 def test_feature_2():
 
     user_Query = "what is the character name in the wallpaper?"
+    print("Enter Prompt: " )
+    prompt = sys.stdin.read()
+
+    print("Enter Prompt: " )
+    prompt = sys.stdin.read()
     youtube_url = "https://youtu.be/nVyD6THcvDQ"  # Example URL
     timestamp = 60.0
 
