@@ -49,9 +49,6 @@ class Trending:
         # Apply Min-Max Scaling to the selected columns
         self.df[columns_to_normalize] = scaler.fit_transform(self.df[columns_to_normalize])
 
-        print("DataFrame with normalized scoring columns (Min-Max Scaling):")
-        print(self.df[columns_to_normalize].head())
-
         """## Calculate Trending Score
 
         ### Subtask:
@@ -105,4 +102,4 @@ if __name__ == "__main__":
 
     print(type(videos))
 
-    print(videos[["video_id", "title", "Description"]].head(20))
+    print(videos[["video_id", "title", "description"]].head(20))

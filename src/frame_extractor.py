@@ -142,7 +142,7 @@ class FrameExtractor:
     # -------------------------------------
     # 6. Final Context Builder
     # -------------------------------------
-    def build_video_context(self, youtube_url, timestamp, context_seconds=3, fps_sample=2):
+    def build_video_context(self, youtube_url, timestamp, context_seconds=6, fps_sample=2):
         """
         Builds a complete video context including frames and transcript for a YouTube URL.
 
@@ -234,8 +234,9 @@ class FrameExtractor:
             # 4. Extract transcript for the context window
             try:
                 print("Extracting transcript...")
-                transcript_start = max(0.0, timestamp - context_seconds)
-                transcript_end = timestamp + 1.0 # Give a little buffer for the exact timestamp
+                # transcript_start = max(0.0, timestamp - context_seconds)
+                transcript_start = 0.0
+                transcript_end = timestamp + 2.0 # Give a little buffer for the exact timestamp
                 video_context["transcript"] = self.extract_transcript_segment(audio_path, transcript_start, transcript_end)
             except Exception as e:
                 print(f"Transcript extraction error: {e}")
@@ -263,5 +264,3 @@ if __name__ == '__main__':
         print(f"Transcript segment: {context['transcript']}")
     else:
         print("Failed to build video context.")
-
-    print(type(context['frames']))

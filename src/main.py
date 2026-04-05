@@ -8,6 +8,7 @@ from rag_to_url import RAGFetcher
 from searching_ranking import VideoRanker
 from helper.dataset import Dataset
 import sys
+from datetime import datetime
 
 class RankedVideos:
     
@@ -45,22 +46,9 @@ class RankedVideos:
         #get the url
         self.url_fetcher = RAGFetcher(dataframe = self.df, faiss_scores = faiss_scores, videoIDs = videoIDs)
         result = self.url_fetcher.get_rag_results()
-        
-        print("")
-
-        print("Video IDs:", len(result["ids"][0]))
-        print("Distances: ", len(result["distances"][0]))
-        
-        print("Video ID                   Title")
-        
-        for metadata in result["metadatas"][0]:
-
-            print(f"{metadata["video_id"]} {metadata["title"]}")
-
-        print("")
 
         #rank the videos and return the ranked videos.
-        ranked_videos = self.ranker.rank(rag_results = result)
+        ranked_videos = self.ranker.rank(rag_results = result, weights = meta["weights"])
 
         self.ranker.display_results(ranked_videos)
 
@@ -86,16 +74,13 @@ class VideoQuery:
             )
         
         frames = context['frames']
+        transcript = context['transcript']
 
-        question = self.interpretor.get_question(frames)
-
-        interpretaion = self.interpretor.interpret_frames(question = question)
+        interpretaion = self.interpretor.interpret_frames(frames = frames, transcript = transcript)
 
         answer = self.responder.answer_question(question = userquery, context = interpretaion)
 
         return answer
-
-
 
 
 def test_feature_1():
@@ -110,25 +95,55 @@ def test_feature_1():
     ranked = video_fetcher.get_ranked_videos(prompt = prompt)
 
 
-
-
 def test_feature_2():
 
-    user_Query = "what is the character name in the wallpaper?"
+    # user_Query = "what is the character name in the wallpaper?"
+    
     print("Enter Prompt: " )
     prompt = sys.stdin.read()
 
-    print("Enter Prompt: " )
-    prompt = sys.stdin.read()
-    youtube_url = "https://youtu.be/nVyD6THcvDQ"  # Example URL
-    timestamp = 60.0
+    print("Enter time like hours:minutes:seconds : ")
+    timestamp = sys.stdin.read()
+
+    time_str_ls = timestamp.split(":")
+
+    time_str_ls = map(lambda x: x.strip(), time_str_ls)
+    
+    h, m, s = 0, 0, 0
+
+    if len(list(time_str_ls)) == 3:
+
+        h, m, s = map(int, time_str_ls)
+
+        s += (h * 3600) + (m * 60)
+    
+    elif len(list(time_str_ls)) == 2:
+
+        m, s = map(int, time_str_ls)
+
+        s += m * 60
+    
+    elif len(list(time_str_ls)) == 1:
+
+        s = map(int, time_str_ls)
+    
+    else:
+
+        ValueError("Please enter the time in proper time foramt.")
+
+
+    # youtube_url = "https://youtu.be/nVyD6THcvDQ"  # Example URL
+
+    youtube_url = "https://www.youtube.com/watch?v=E_EQVLX_Kq0"
+
+    timestamp = s
 
     vq = VideoQuery()
-    answer = vq.get_response(userquery = user_Query, youtube_url = youtube_url, timestamp = timestamp)
+    answer = vq.get_response(userquery = prompt, youtube_url = youtube_url, timestamp = timestamp)
 
     pprint(answer)
 
 if __name__ == "__main__":
 
-    test_feature_1()
-    # test_feature_2()
+    # test_feature_1()
+    test_feature_2()

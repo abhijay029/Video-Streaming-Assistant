@@ -7,14 +7,14 @@ class VideoAssistant:
         load_dotenv(".env")
         self.llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
-        temperature=0.3,
+        temperature=0.3
         )
 
     def answer_question(self, context, question):
         prompt = f"""
         Context: {context}
         Question: {question}
-        Answer clearly for a student.
+        Answer clearly.
         """
 
         response = self.llm.invoke([

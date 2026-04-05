@@ -33,8 +33,14 @@ class RAGFetcher:
                 'likes': row['like_count'],
                 'duration': self._format_duration(row['duration_seconds']),
                 'upload_date': row['published_at'],
+                'like_view_ratio': row['like_view_ratio'],
+                'comments_count': row['comment_count'],
+                'year': row['published_at'].year,
+                'duration_category': row['duration_category'],
+                'topic': row['category_id'],
                 'url': f"https://www.youtube.com/watch?v={row['video_id']}",
                 'embed_url': f"https://www.youtube.com/embed/{row['video_id']}"
+                
             }
             metadatas.append(metadata)
 

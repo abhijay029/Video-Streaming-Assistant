@@ -13,3 +13,14 @@ class Dataset:
             raise FileNotFoundError("Dataset not found: It may not exists \n Path: ", path)
                 
         return pd.read_csv(path, parse_dates=['published_at'])
+
+if __name__ == "__main__":
+
+    dataset = Dataset.get_dataframe()
+
+    for _, row in dataset.iterrows():
+
+        print(row['published_at'].year)
+        print(type(row['published_at']))
+
+        break

@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     model = Models.get_encoder()
     
-    prompt = "I want videos of pets and pet care."
+    prompt = "I want to see some pet care tutorials."
     
     prompt_vec = model.encode(prompt)
 
@@ -84,4 +84,28 @@ if __name__ == "__main__":
     
     results = ret.get_videoIDs(prompt, prompt_vec = prompt_vec, k = 3)
 
-    print(results)
+    for id, score in results.items():
+        
+        count = 1
+        print("\nVideo " + count)
+        print("Video ID: "+ id)
+        print("Cross Score: " + str(score["cross"]))
+        print("FAISS Score: " + str(score["faiss"]))
+        
+        row = df[df["video_id"] == id].iloc[0]
+
+        title = row['title']
+        description = row['description']
+        tags = row['tags']
+
+        print("\nTitle:")
+        print(title)
+
+        print("\nDescripiton:")
+        print(description)
+
+        print("\nTags:")
+        print(tags)
+
+        count += 1
+     

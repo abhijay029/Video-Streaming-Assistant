@@ -21,12 +21,10 @@ class VideoRanker:
 
     def rank(self,
              rag_results: Dict[str, Any],
-             filter_type: str = 'engagement',
+             weights: Dict[str, float],
              min_views: Optional[int] = None,
              min_likes: Optional[int] = None,
              min_engagement: Optional[float] = None,
-             difficulty: Optional[str] = None,
-             topic: Optional[str] = None,
              duration: Optional[str] = None) -> List[Dict]:
         """
         Filter and rank videos, return top N results
@@ -37,7 +35,6 @@ class VideoRanker:
         - 'comments': most commented
         - 'recency': newest videos first
         - 'popularity': views + likes + comments
-        - 'balanced': relevance + engagement
         """
 
         video_ids = rag_results['ids'][0]
@@ -55,34 +52,31 @@ class VideoRanker:
                 continue
             if min_engagement and meta.get('engagement_score', 0) < min_engagement:
                 continue
-            if difficulty and meta.get('difficulty_level') != difficulty:
-                continue
-            if topic and meta.get('topic') != topic:
-                continue
             if duration and meta.get('duration_category') != duration:
                 continue
 
-            # Calculate score based on filter_type
+            # Calculate score
             relevance = 1 - dist
-            engagement = meta.get('engagement_score', 0)
-            like_ratio = meta.get('like_view_ratio', 0)
             comments = meta.get('comments_count', 0)
             views = meta.get('views', 0)
             likes = meta.get('likes', 0)
             year = meta.get('year', 2020)
+            like_ratio = meta.get('like_view_ratio', 0)
+            recency = (year - 2020) / 5
+            popularity = (0.4 * np.log1p(views) + 0.4 * np.log1p(likes) + 0.2 * np.log1p(comments))
+            engagement = ((likes/views) * 0.4) * ((comments/views) * 0.6)
 
-            if filter_type == 'engagement':
-                score = engagement
-            elif filter_type == 'like_ratio':
-                score = like_ratio
-            elif filter_type == 'comments':
-                score = np.log1p(comments)
-            elif filter_type == 'recency':
-                score = (year - 2020) / 5
-            elif filter_type == 'popularity':
-                score = (0.4 * np.log1p(views) + 0.4 * np.log1p(likes) + 0.2 * np.log1p(comments))
-            elif filter_type == 'balanced':
-                score = (0.3 * relevance + 0.7 * engagement)
+            if weights:
+                
+                score = (
+
+                        (like_ratio * weights["like_ratio"]) +
+                        (recency * weights["recency"]) +
+                        (popularity * weights["popularity"]) +
+                        (engagement * weights["engagement"]) +
+                        (comments * weights["comments"])
+                )
+            
             else:
                 score = relevance
 
@@ -97,7 +91,6 @@ class VideoRanker:
                 'comments': meta.get('comments_count', 0),
                 'duration': meta.get('duration_category', 'N/A'),
                 'topic': meta.get('topic', 'N/A'),
-                'difficulty': meta.get('difficulty_level', 'N/A'),
                 'year': meta.get('year', 'N/A'),
                 'like_ratio': meta.get('like_view_ratio', 0) * 100,
                 'engagement': meta.get('engagement_score', 0) * 100,
@@ -122,7 +115,7 @@ class VideoRanker:
             print(f"\n{medal} {v['title']}")
             
             print(f"   🔗 {v['url']}")
-            print(f"   👤 {v['channel']} | 📚 {v['topic']} | 📊 {v['difficulty']}")
+            print(f"   👤 {v['channel']} | 📚 {v['topic']}")
             print(f"   📈 Views: {self._format_num(v['views'])} | 👍 Likes: {self._format_num(v['likes'])}")
             
 
@@ -158,13 +151,21 @@ if __name__ == "__main__":
         'metadatas': [sample_videos]
     }
 
+    weights = {
+        'engagement': np.float32(0.23503837), 
+        'like_ratio': np.float32(0.2534193), 
+        'comments': np.float32(0.2700361), 
+        'recency': np.float32(0.2415062), 
+        'popularity': np.float32(0.0)
+        }
+    
     # Initialize ranker
     ranker = VideoRanker()
 
     # Get top 5 using popularity filter
     top_5 = ranker.rank(
-        rag_results,
-        filter_type='popularity',
+        rag_results = rag_results,
+        weights = weights,
     )
 
     # Display results
