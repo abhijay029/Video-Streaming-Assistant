@@ -22,10 +22,10 @@ class RankedVideos:
         self.preprocessor = PromptPreprocessor()
         self.retriever = VideoIDRetriever(vecDB_path = self.VEC_DB_PATH, dataframe = self.df)
         self.ranker = VideoRanker()
-
+        
         print("DEBUG: LINE 25, RankedVideos CONSTRUCTOR EXECUTED. \n")
 
-    def get_ranked_videos(self, prompt: str):
+    def get_ranked_videos(self, prompt: str, k = 5):
 
         meta, vec = self.preprocessor.preprocess(prompt)
 
@@ -33,7 +33,7 @@ class RankedVideos:
         
         print("Prompt vector: ", vec.shape)
 
-        results = self.retriever.get_videoIDs(meta["raw_prompt"], vec, k = 5)
+        results = self.retriever.get_videoIDs(meta["raw_prompt"], vec, k)
 
         print("")
 
@@ -95,7 +95,7 @@ def test_feature_1():
     ranked = video_fetcher.get_ranked_videos(prompt = prompt)
 
 
-def test_feature_2():
+def test_feature_2(url):
 
     # user_Query = "what is the character name in the wallpaper?"
     
@@ -134,7 +134,7 @@ def test_feature_2():
 
     # youtube_url = "https://youtu.be/nVyD6THcvDQ"  # Example URL
 
-    youtube_url = "https://www.youtube.com/watch?v=E_EQVLX_Kq0"
+    youtube_url = url
 
     timestamp = s
 
@@ -145,5 +145,6 @@ def test_feature_2():
 
 if __name__ == "__main__":
 
+    url = "https://www.youtube.com/watch?v=29ZQ3TDGgRQ"
     # test_feature_1()
-    test_feature_2()
+    test_feature_2(url)

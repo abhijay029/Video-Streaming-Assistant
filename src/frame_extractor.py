@@ -1,252 +1,238 @@
-
 import cv2
 import yt_dlp
 import base64
 import os
 import tempfile
-import numpy as np
 import whisper_timestamped as whisper
+from youtube_transcript_api import YouTubeTranscriptApi
+from threading import Thread
 
 class FrameExtractor:
+
     def __init__(self):
-        pass
-    def extract_frames(self, video_path, timestamp, context_seconds=3, fps_sample=2):
-        """
-        Extracts frames around a given timestamp from a video file.
 
-        Args:
-            video_path (str): Path to the video file.
-            timestamp (float): The central timestamp in seconds.
-            context_seconds (int): Number of seconds before the timestamp to include for context.
-            fps_sample (int): Frames per second to sample within the context window.
+        self.frames = None
+        self.transcript = None
 
-        Returns:
-            list: A list of extracted frames (NumPy arrays), sorted by time.
-        """
+        print("Loading Whisper model")
+        self.whisper_model = whisper.load_model("tiny")
+
+    def extract_frames(
+        self,
+        video_path,
+        timestamp,
+        context_seconds=3,
+        fps_sample=2
+    ):
+
         cap = cv2.VideoCapture(video_path)
+
         if not cap.isOpened():
-            raise ValueError(f"Could not open video file: {video_path}")
+            raise ValueError("Could not open video")
 
-        # Get video properties
         video_fps = cap.get(cv2.CAP_PROP_FPS)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = total_frames / video_fps
-
-        print(f"DEBUG (extract_frames): Video Properties - FPS: {video_fps}, Total Frames: {total_frames}, Duration: {duration:.2f}s")
-
-        # Try to read the very first frame as a diagnostic
-        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        ret_first, first_frame = cap.read()
-        if ret_first:
-            print("DEBUG (extract_frames): Successfully read the first frame.")
-        else:
-            print("DEBUG (extract_frames): Failed to read the first frame. This might indicate an issue with OpenCV's video decoding.")
-            cap.release()
-            return [] # Return empty if even the first frame can't be read
-
-        if timestamp < 0 or timestamp > duration:
-            raise ValueError(f"Timestamp {timestamp}s is out of video duration (0s to {duration:.2f}s).")
 
         frames_to_extract = []
-        # Add the current frame
-        frames_to_extract.append(timestamp)
 
         # Add context frames
-        for i in range(1, int(context_seconds * fps_sample) + 1):
-            context_timestamp = timestamp - (i / fps_sample)
-            if context_timestamp >= 0:
-                frames_to_extract.append(context_timestamp)
+        for i in range(int(context_seconds * fps_sample) + 1):
 
-        # Sort timestamps to ensure frames are extracted in order, avoiding jumping back and forth
-        frames_to_extract = sorted(list(set(frames_to_extract)))
+            ts = timestamp - (i / fps_sample)
+
+            if ts >= 0:
+                frames_to_extract.append(ts)
+
+        frames_to_extract = sorted(set(frames_to_extract))
 
         extracted_frames = []
+
         for ts in frames_to_extract:
-            # Calculate the frame index
+
             frame_idx = int(ts * video_fps)
 
-            # Set position in frames
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
 
             ret, frame = cap.read()
+
             if ret:
                 extracted_frames.append(frame)
-            else:
-                print(f"Warning: Could not read frame at timestamp {ts}s (frame index {frame_idx}).")
 
         cap.release()
+
         return extracted_frames
 
-    # -------------------------------------
-    # 4. Base64 Encoding
-    # -------------------------------------
     def encode_frames_to_base64(self, frames):
-        """
-        Converts a list of OpenCV frames (NumPy arrays) into a list of base64 encoded strings.
 
-        Args:
-            frames (list): A list of OpenCV frames.
-
-        Returns:
-            list: A list of base64 encoded strings, even if only one frame.
-        """
         base64_frames = []
+
         for frame in frames:
-            # Encode frame as JPEG
+
             _, buffer = cv2.imencode('.jpg', frame)
-            # Convert to bytes and then base64
-            jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+
+            jpg_as_text = base64.b64encode(
+                buffer
+            ).decode('utf-8')
+
             base64_frames.append(jpg_as_text)
+
         return base64_frames
 
-    # -------------------------------------
-    # 5. Transcript Extraction
-    # -------------------------------------
-    def extract_transcript_segment(self, audio_path, start_time, end_time, model_name="tiny"):
-        """
-        Extracts transcript segment from an audio file using Whisper between specified timestamps.
+    def get_transcript_from_youtube(
+        self,
+        video_id,
+        start_time,
+        end_time
+    ):
 
-        Args:
-            audio_path (str): Path to the audio file.
-            start_time (float): Start time of the segment in seconds.
-            end_time (float): End time of the segment in seconds.
-            model_name (str): The name of the Whisper model to use (e.g., 'tiny', 'base', 'small').
-
-        Returns:
-            str: The concatenated transcript for the specified segment.
-        """
-        if not os.path.exists(audio_path):
-            return "Audio file not found for transcript extraction."
-
+        
         try:
-            # Load the Whisper model
-            # Using whisper-timestamped as it provides word-level timestamps, useful for filtering.
-            model = whisper.load_model(model_name)
-            result = whisper.transcribe(model, audio_path, language="en") # Assuming English for now
 
-            transcript_segment = []
-            for segment in result['segments']:
-                if segment['start'] < end_time and segment['end'] > start_time:
-                    # Only add words that are within the specified time range
-                    words_in_segment = []
-                    for word in segment['words']:
-                        if word['start'] < end_time and word['end'] > start_time:
-                            words_in_segment.append(word['text'])
-                    if words_in_segment:
-                        transcript_segment.append(" ".join(words_in_segment))
+            transcript = YouTubeTranscriptApi.get_transcript(
+                video_id
+            )
 
-            return " ".join(transcript_segment).strip()
-        except Exception as e:
-            return f"Error extracting transcript: {e}"
+            words = []
 
-    # -------------------------------------
-    # 6. Final Context Builder
-    # -------------------------------------
-    def build_video_context(self, youtube_url, timestamp, context_seconds=6, fps_sample=2):
-        """
-        Builds a complete video context including frames and transcript for a YouTube URL.
+            for segment in transcript:
 
-        Args:
-            youtube_url (str): The YouTube video URL.
-            timestamp (float): The central timestamp in seconds for context extraction.
-            context_seconds (int): Number of seconds before the timestamp for frames and transcript.
-            fps_sample (int): Frames per second to sample for frame extraction.
+                if (
+                    segment["start"] < end_time
+                    and
+                    segment["start"] + segment["duration"]
+                    > start_time
+                ):
 
-        Returns:
-            dict: A dictionary containing base64 frames, transcript, and the timestamp.
-                Returns None if video download fails or critical errors occur.
-        """
+                    words.append(segment["text"])
+
+            return " ".join(words)
+
+        except Exception:
+
+            return None
+        
+    def extract_transcript_whisper(
+        self,
+        video_path,
+        start_time,
+        end_time
+    ):
+        
+        result = whisper.transcribe(
+            self.whisper_model,
+            video_path,
+            language="en"
+        )
+
+        transcript_segment = []
+
+        for segment in result['segments']:
+
+            if (
+                segment['start'] < end_time
+                and
+                segment['end'] > start_time
+            ):
+
+                transcript_segment.append(
+                    segment['text']
+                )
+
+        return " ".join(transcript_segment)
+        
+    def build_video_context(
+        self,
+        youtube_url,
+        timestamp,
+        context_seconds=6,
+        fps_sample=2
+    ):
+
         video_context = {
             "frames": [],
             "transcript": "",
             "timestamp": timestamp
         }
 
-        # Use temporary files for video and audio
+        video_id = youtube_url.split("v=")[-1].split("/")[-1]
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            video_path = os.path.join(tmpdir, 'video.mp4')
-            audio_path_base = os.path.join(tmpdir, 'audio') # Define a base name without .wav extension
 
-            # 1. Download video (best quality mp4) and audio (wav)
+            video_path = os.path.join(
+                tmpdir,
+                "video.mp4"
+            )
+
+
+            print("Downloading low-res video")
+
+            ydl_opts = {
+
+                'format': 'worstvideo[ext=mp4]+bestaudio[ext=m4a]/worst[ext=mp4]',
+
+                'outtmpl': video_path,
+
+                'quiet': True,
+
+                'noplaylist': True,
+
+            }
+
             try:
-                print(f"Downloading video from {youtube_url}...")
-                ydl_opts_video = {
-                    'format': 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[ext=mp4]', # Prefer H.264 codec
-                    'outtmpl': video_path,
-                    'quiet': False, # Set to False for more verbose output during debugging
-                    'noplaylist': True,
-                }
-                with yt_dlp.YoutubeDL(ydl_opts_video) as ydl:
+
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
                     ydl.download([youtube_url])
 
-                if not os.path.exists(video_path) or os.path.getsize(video_path) == 0:
-                    raise FileNotFoundError(f"Video file not created or is empty at {video_path} after download.")
-                print(f"Video downloaded to {video_path} (size: {os.path.getsize(video_path)} bytes)")
-
-                print(f"Downloading audio from {youtube_url}...")
-                ydl_opts_audio = {
-                    'format': 'bestaudio/best',
-                    'outtmpl': audio_path_base, # Use the base name, yt-dlp will add .wav
-                    'quiet': False, # Set to False for more verbose output during debugging
-                    'noplaylist': True,
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'wav',
-                        'preferredquality': '192',
-                    }],
-                }
-                with yt_dlp.YoutubeDL(ydl_opts_audio) as ydl:
-                    ydl.download([youtube_url])
-
-                # Update audio_path to the actual file created by yt-dlp after post-processing
-                audio_path = audio_path_base + '.wav'
-
-                if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
-                    raise FileNotFoundError(f"Audio file not created or is empty at {audio_path} after download.")
-                print(f"Audio downloaded to {audio_path} (size: {os.path.getsize(audio_path)} bytes)")
-
-            except yt_dlp.utils.DownloadError as e:
-                print(f"Video download failed: {e}")
-                return None
-            except FileNotFoundError as e:
-                print(f"Download verification failed: {e}")
-                return None
             except Exception as e:
-                print(f"An unexpected error occurred during download: {e}")
+
+                print("Download failed:", e)
+
                 return None
 
-            # 2. Extract frames
-            try:
-                print("Extracting frames...")
-                frames = self.extract_frames(video_path, timestamp, context_seconds, fps_sample)
-                if not frames:
-                    print("No frames extracted.")
-                else:
-                    # 3. Convert frames to base64
-                    video_context["frames"] = self.encode_frames_to_base64(frames)
-            except ValueError as e:
-                print(f"Frame extraction error: {e}")
-                return None
-            except Exception as e:
-                print(f"An unexpected error occurred during frame extraction/encoding: {e}")
-                return None
 
-            # 4. Extract transcript for the context window
-            try:
-                print("Extracting transcript...")
-                # transcript_start = max(0.0, timestamp - context_seconds)
-                transcript_start = 0.0
-                transcript_end = timestamp + 2.0 # Give a little buffer for the exact timestamp
-                video_context["transcript"] = self.extract_transcript_segment(audio_path, transcript_start, transcript_end)
-            except Exception as e:
-                print(f"Transcript extraction error: {e}")
-                video_context["transcript"] = f"Error extracting transcript: {e}"
+            frames = self.extract_frames(
+                video_path,
+                timestamp,
+                context_seconds,
+                fps_sample
+            )
+            
+            video_context["frames"] = self.encode_frames_to_base64(frames = frames)
+
+            # transcript_start = max(
+            #     0,
+            #     timestamp - context_seconds
+            # )
+
+            transcript_start = 0
+
+            transcript_end = timestamp + 2
+
+            transcript = self.get_transcript_from_youtube(
+                    video_id,
+                    transcript_start,
+                    transcript_end
+                )
+
+            
+            if transcript is None:
+
+                print(
+                    "No captions — using Whisper fallback"
+                )
+
+                transcript = self.extract_transcript_whisper(
+                        video_path,
+                        transcript_start,
+                        transcript_end
+                    )
+
+            video_context["transcript"] = transcript
+
+            
 
         return video_context
 
-    # -------------------------------------
-    # 7. Example Usage
-    # -------------------------------------
 if __name__ == '__main__':
     youtube_url = "https://youtu.be/nVyD6THcvDQ"  # Example URL
     timestamp = 60.0  # Example timestamp in seconds

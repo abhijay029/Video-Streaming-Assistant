@@ -6,7 +6,7 @@ class Dataset:
     @staticmethod
     def get_dataframe():
 
-        path = "Dataset\\youtube_videos_dataset.csv"
+        path = "Dataset\\real_youtube_dataset.csv"
 
         if not os.path.exists(path):
 
