@@ -2,10 +2,10 @@ import pandas as pd
 from helper.dataset import Dataset
 
 class RAGFetcher:
-    def __init__(self, dataframe: pd.DataFrame, faiss_scores: list = None, videoIDs: list = ["tkQwDzaarlM", "m-xcxqjjOwB", "mgKTtF-GswP", "G25yIun-Isc", "7LB6MSxROy8"]):
+    def __init__(self, dataframe: pd.DataFrame, cross_scores: list = None, videoIDs: list = ["tkQwDzaarlM", "m-xcxqjjOwB", "mgKTtF-GswP", "G25yIun-Isc", "7LB6MSxROy8"]):
         self.df = dataframe
         self.df = self.df[self.df["video_id"].isin(videoIDs)]
-        self.faiss_scores = faiss_scores
+        self.cross_scores = cross_scores
 
     def _format_duration(self, seconds):
         if pd.isna(seconds):
@@ -46,7 +46,7 @@ class RAGFetcher:
 
         return {
             'ids': [video_ids],
-            'distances': [self.faiss_scores],
+            'distances': [self.cross_scores],
             'metadatas': [metadatas]
         }
 

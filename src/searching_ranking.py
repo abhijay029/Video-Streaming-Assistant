@@ -54,6 +54,7 @@ class VideoRanker:
                 continue
             if duration and meta.get('duration_category') != duration:
                 continue
+            
 
             # Calculate score
             relevance = 1 - dist
@@ -74,7 +75,8 @@ class VideoRanker:
                         (recency * weights["recency"]) +
                         (popularity * weights["popularity"]) +
                         (engagement * weights["engagement"]) +
-                        (comments * weights["comments"])
+                        (comments * weights["comments"]) + 
+                        (relevance * 0.5)
                 )
             
             else:
@@ -94,6 +96,9 @@ class VideoRanker:
                 'year': meta.get('year', 'N/A'),
                 'like_ratio': meta.get('like_view_ratio', 0) * 100,
                 'engagement': meta.get('engagement_score', 0) * 100,
+                'recency': recency,
+                'popularity': popularity,
+                'like_view_ratio': like_ratio,
                 'score': score
             })
 
@@ -117,6 +122,10 @@ class VideoRanker:
             print(f"   🔗 {v['url']}")
             print(f"   👤 {v['channel']} | 📚 {v['topic']}")
             print(f"   📈 Views: {self._format_num(v['views'])} | 👍 Likes: {self._format_num(v['likes'])}")
+            print(f"      Duration: {v["duration"]}")
+            print(f"      Like View Ratio: {v["like_view_ratio"]}")
+            print(f"      Recency: {v["recency"]}")
+            print(f"      Popularity: {v["popularity"]}")
             
 
     def _format_num(self, num):

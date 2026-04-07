@@ -27,7 +27,10 @@ class RankedVideos:
 
     def get_ranked_videos(self, prompt: str, k = 5):
 
-        meta, vec = self.preprocessor.preprocess(prompt)
+        meta, vec, duration = self.preprocessor.preprocess(prompt)
+
+        duration_name = list(duration.keys())[0]
+        duration_score = duration.get(duration_name, 0)
 
         print("")
         
@@ -39,16 +42,16 @@ class RankedVideos:
 
         print("Video IDs Retrieved: ", len(results.keys()))
         
-        faiss_scores = [item[1]["faiss"] for item in results.items()]
+        cross_scores = [item[1]["cross"] for item in results.items()]
         
         videoIDs = list(results.keys())
         
         #get the url
-        self.url_fetcher = RAGFetcher(dataframe = self.df, faiss_scores = faiss_scores, videoIDs = videoIDs)
+        self.url_fetcher = RAGFetcher(dataframe = self.df, cross_scores = cross_scores, videoIDs = videoIDs)
         result = self.url_fetcher.get_rag_results()
 
         #rank the videos and return the ranked videos.
-        ranked_videos = self.ranker.rank(rag_results = result, weights = meta["weights"])
+        ranked_videos = self.ranker.rank(rag_results = result, weights = meta["weights"], duration = duration_name)
 
         self.ranker.display_results(ranked_videos)
 
@@ -86,9 +89,9 @@ class VideoQuery:
 def test_feature_1():
     
     print("Enter Prompt: " )
-    prompt = sys.stdin.read()
+    # prompt = sys.stdin.read()
 
-    # prompt = "Give me a video about Pets & Animals and Pet Care"
+    prompt = "Recent Popular short form videos."
     
     video_fetcher = RankedVideos()
 

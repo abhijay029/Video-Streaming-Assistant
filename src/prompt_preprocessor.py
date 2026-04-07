@@ -17,7 +17,10 @@ class PromptPreprocessor:
             "high": 1,
             "latest": 1,
             "low": -1,
-            "old": -1
+            "old": -1,
+            "short": 1,
+            "medium": 1,
+            "long": 1
         }
 
         self.filter_phrases = {
@@ -145,6 +148,67 @@ class PromptPreprocessor:
                 "niche",
                 "rarely watched"
                 ]
+            },
+
+            "duration": {
+
+                "short": [
+                    "short",
+                    "short video",
+                    "quick video",
+                    "quick tutorial",
+                    "brief explanation",
+                    "bite sized",
+                    "bite sized tutorial",
+                    "mini tutorial",
+                    "short lesson",
+                    "fast explanation",
+                    "quick overview",
+                    "in a few minutes",
+                    "under 5 minutes",
+                    "under 10 minutes",
+                    "concise video",
+                    "quick walkthrough",
+                    "short and simple",
+                    "compact tutorial"
+                ],
+
+                "medium": [
+                    "medium length",
+                    "standard length",
+                    "regular tutorial",
+                    "normal duration",
+                    "moderate length",
+                    "full tutorial",
+                    "complete explanation",
+                    "typical tutorial",
+                    "detailed but not too long",
+                    "balanced duration",
+                    "around 10 to 20 minutes",
+                    "mid length video",
+                    "moderate tutorial",
+                    "standard video length"
+                ],
+
+                "long": [
+                    "long",
+                    "long video",
+                    "long tutorial",
+                    "deep dive",
+                    "in depth tutorial",
+                    "full length lecture",
+                    "extended tutorial",
+                    "comprehensive guide",
+                    "detailed walkthrough",
+                    "full course",
+                    "lecture style video",
+                    "over 30 minutes",
+                    "hour long video",
+                    "long detailed explanation",
+                    "deep technical explanation",
+                    "masterclass",
+                    "complete course"
+                ]
             }
 
         }
@@ -232,6 +296,8 @@ class PromptPreprocessor:
 
         best = self.extract_filters(prompt_vec)
 
+        duration = best.pop("duration", {})
+
         weights = self.compute_weights(best)
 
         return ({
@@ -239,13 +305,13 @@ class PromptPreprocessor:
             "cleaned_prompt": cleaned,
             "best_filters": best,
             "weights": weights
-        }, prompt_vec)
+        }, prompt_vec, duration)
 
 if __name__ == "__main__":
     
     pp = PromptPreprocessor()
     
-    meta, vec = pp.preprocess("Suggest transformer architecture videos.")
+    meta, vec, duration = pp.preprocess("Short form Machine Learning tutorials.")
     
     print("\nRaw Prompt:")
     print(meta["raw_prompt"])
@@ -258,3 +324,6 @@ if __name__ == "__main__":
 
     print("\nWeights:")
     print(meta["weights"])
+
+    print("\nDuration:")
+    print(duration)

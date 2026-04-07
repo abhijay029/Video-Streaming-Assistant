@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     model = Models.get_encoder()
     
-    prompt = "I want to see some pet care tutorials."
+    prompt = "Machine learning using scikit learn."
     
     prompt_vec = model.encode(prompt)
 
@@ -84,10 +84,11 @@ if __name__ == "__main__":
     
     results = ret.get_videoIDs(prompt, prompt_vec = prompt_vec, k = 3)
 
+    count = 1
+
     for id, score in results.items():
-        
-        count = 1
-        print("\nVideo " + count)
+    
+        print("\nVideo " + str(count))
         print("Video ID: "+ id)
         print("Cross Score: " + str(score["cross"]))
         print("FAISS Score: " + str(score["faiss"]))
