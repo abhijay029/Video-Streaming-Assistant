@@ -8,3 +8,4 @@ video_index.faiss
 __pycache__/
 *.pyc
 test/
+*.npy
